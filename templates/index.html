@@ -253,8 +253,12 @@
                 previewAudio.onended = stopPreview;
                 previewAudio.onerror = () => {
                     dom.status.textContent = 'Erro ao tocar amostra.';
-                    stopPreview();
-                };
+                // Apenas mostra o erro se o áudio não foi parado manualmente pelo usuário
+                if (previewAudio) {
+                dom.status.textContent = 'Erro ao tocar amostra.';
+                      }
+                 stopPreview(); 
+            };
             } catch (error) {
                 dom.status.textContent = 'Erro: ' + error.message;
                 stopPreview();
