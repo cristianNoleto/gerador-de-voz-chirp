@@ -1,0 +1,12 @@
+# Arquivo de credenciais do Google - NUNCA ENVIE ISSO!
+credentials.json
+
+# Pasta de cache do Python
+__pycache__/
+
+# Pasta de áudios gerados
+audio_history/
+
+# Arquivos de ambiente virtual (se você usar)
+.venv/
+venv/

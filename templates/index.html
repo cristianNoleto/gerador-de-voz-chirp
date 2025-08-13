@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estúdio de Voz Definitivo</title>
+    <style>
+        :root { --accent-color: #4285F4; --bg-light: #f8f9fa; --border-color: #dee2e6; --dark-text: #212529; --light-text: #6c757d; --danger-color: #db4437; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; background-color: var(--bg-light); color: var(--dark-text); }
+        h1, h2, h3 { text-align: center; color: var(--accent-color); }
+        h3 { font-size: 1.1em; margin-bottom: 15px; text-align: left; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .control-group { margin-bottom: 20px; }
+        label { font-weight: bold; margin-bottom: 8px; display: block; font-size: 14px; }
+        select, input, button { font-family: inherit; font-size: 16px; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); box-sizing: border-box; width: 100%; }
+        textarea { width: 100%; height: 250px; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-color); resize: vertical; }
+        button { cursor: pointer; color: white; transition: background-color 0.2s, transform 0.1s; border: none; }
+        button:active { transform: scale(0.98); }
+        .filter-buttons { display: flex; gap: 8px; }
+        .filter-btn { padding: 8px 16px; font-size: 14px; color: #333; background-color: #e9ecef; flex-grow: 1; border: 1px solid var(--border-color); }
+        .filter-btn.active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+        .flex-row { display: flex; align-items: center; gap: 8px; }
+        .info-icon { position: relative; display: inline-block; cursor: pointer; color: var(--accent-color); font-weight: bold; margin-left: 5px; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px; border: 1px solid var(--accent-color); }
+        .info-icon .tooltip-text { visibility: hidden; width: 350px; background-color: #555; color: #fff; text-align: left; border-radius: 6px; padding: 10px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -175px; opacity: 0; transition: opacity 0.3s; font-weight: normal; font-size: 14px; }
+        .info-icon:hover .tooltip-text { visibility: visible; opacity: 1; }
+        .info-icon .tooltip-text ul { padding-left: 20px; margin: 5px 0; }
+        #generateBtn { background-color: #34A853; }
+        .action-btn { flex-shrink: 0; width: auto; padding: 12px 14px; }
+        #previewPlayBtn { background-color: var(--accent-color); }
+        #previewStopBtn { background-color: var(--danger-color); }
+        #setFavoriteBtn { background-color: #fbbc05; }
+        #newChannelBtn { background-color: #5f6368; }
+        button:disabled { background-color: #9E9E9E; cursor: not-allowed; }
+        .rate-control { display: flex; align-items: center; gap: 15px; }
+        .rate-control input[type="range"] { flex-grow: 1; padding: 0;}
+        .rate-control span { font-weight: bold; font-family: monospace; }
+        #historyList { list-style: none; padding: 0; }
+        .history-item { display: flex; align-items: center; background: #f1f3f5; padding: 10px; border-radius: 6px; margin-bottom: 8px; gap: 10px; }
+        .history-item audio { flex-grow: 1; }
+        .delete-btn { background-color: var(--danger-color); flex-shrink: 0; width: auto; padding: 8px 12px; font-size: 14px; }
+        .char-counter { text-align: right; font-size: 14px; color: #6c757d; margin-top: 5px; }
+        .char-counter.error { color: var(--danger-color); font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Estúdio de Voz Definitivo</h1>
+
+    <div class="container">
+        <h3>Canais de Voz (Favoritos)</h3>
+        <div class="grid-container">
+            <div class="control-group"><label for="channelSelect">Selecionar Canal</label><select id="channelSelect"></select></div>
+            <div class="control-group"><label>&nbsp;</label><button id="newChannelBtn">Criar Novo Canal</button></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3>Configuração e Geração</h3>
+        <div class="grid-container">
+            <div class="control-group"><label>Idioma</label><select id="languageSelect"></select></div>
+            <div class="control-group"><label>Filtrar por Gênero</label><div id="genderFilters" class="filter-buttons"><button class="filter-btn active" data-filter="Any">Qualquer</button><button class="filter-btn" data-filter="Feminino">Feminino</button><button class="filter-btn" data-filter="Masculino">Masculino</button></div></div>
+        </div>
+        <div class="control-group"><label for="rateSlider">Velocidade da Fala</label><div class="rate-control"><input type="range" id="rateSlider" min="0.25" max="2.0" value="1.0" step="0.05"><span id="rateValue">1.00x</span></div></div>
+        <div class="control-group"><label>Voz</label><div class="flex-row"><select id="voiceSelect"></select><button id="previewPlayBtn" class="action-btn" title="Ouvir amostra">▶</button><button id="previewStopBtn" class="action-btn" title="Parar amostra">■</button><button id="setFavoriteBtn" class="action-btn" title="Definir como favorita para o canal">⭐</button></div></div>
+        <div class="control-group">
+            <div class="flex-row" style="justify-content: space-between; margin-bottom: 8px;">
+                <label for="textInput" style="margin-bottom: 0;">Texto para Geração</label>
+                <div class="info-icon">?
+                    <div class="tooltip-text"><b>Dicas para uma Fala Natural:</b><ul><li>Use <b>vírgulas (,)</b> para pausas curtas e <b>pontos (.)</b> para pausas mais longas.</li><li>Para pausas personalizadas, use as tags: <code>[pause short]</code> ou <code>[pause long]</code>.</li><li>Escreva como você fala, usando uma linguagem mais conversacional.</li></ul></div>
+                </div>
+            </div>
+            <textarea id="textInput" placeholder="Digite seu texto aqui..."></textarea>
+            <div id="charCounter" class="char-counter">0 / 5000</div>
+        </div>
+        <button id="generateBtn">Gerar Áudio</button>
+        <div id="status" style="text-align: center; color: #EA4335; font-weight: bold; height: 22px; margin-top: 10px;"></div>
+        <div id="mainAudioContainer" style="margin-top: 20px;"></div>
+    </div>
+
+    <div class="container">
+        <h2>Histórico de Áudios Recentes</h2>
+        <ul id="historyList"></ul>
+    </div>
+
+    <script>
+        const API_DATA = {
+            LANGUAGES: {
+                "ar-XA": "Árabe", "bn-IN": "Bengali", "cmn-CN": "Mandarim", "da-DK": "Dinamarquês", "de-DE": "Alemão", "es-ES": "Espanhol (ES)",
+                "es-US": "Espanhol (US)", "fi-FI": "Finlandês", "fr-CA": "Francês (CA)", "fr-FR": "Francês", "gu-IN": "Gujarati", "hi-IN": "Híndi",
+                "id-ID": "Indonésio", "en-AU": "Inglês (AU)", "en-GB": "Inglês (UK)", "en-IN": "Inglês (IN)", "en-US": "Inglês (US)", "it-IT": "Italiano",
+                "ja-JP": "Japonês", "kn-IN": "Canarês", "ko-KR": "Coreano", "ml-IN": "Malaiala", "mr-IN": "Marati", "nb-NO": "Norueguês", "nl-BE": "Holandês (BE)",
+                "nl-NL": "Holandês (NL)", "pl-PL": "Polonês", "pt-BR": "Português (BR)", "ru-RU": "Russo", "sv-SE": "Sueco", "sw-KE": "Suaíli", "ta-IN": "Tâmil",
+                "te-IN": "Telugo", "th-TH": "Tailandês", "tr-TR": "Turco", "uk-UA": "Ucraniano", "ur-IN": "Urdu", "vi-VN": "Vietnamita"
+            },
+            VOICES: [
+                { name: "Aoede", gender: "Feminino" }, { name: "Leda", gender: "Feminino" }, { name: "Callirrhoe", gender: "Feminino" }, { name: "Charon", gender: "Masculino" },
+                { name: "Orus", gender: "Masculino" }, { name: "Algenib", gender: "Masculino" }, { name: "Kore", gender: "Feminino" }, { name: "Zephyr", gender: "Feminino" },
+                { name: "Gacrux", gender: "Feminino" }, { name: "Puck", gender: "Masculino" }, { name: "Fenrir", gender: "Masculino" }, { name: "Achird", gender: "Masculino" },
+                { name: "Erinome", gender: "Feminino" }, { name: "Despina", gender: "Feminino" }, { name: "Autonoe", gender: "Feminino" }, { name: "Enceladus", gender: "Masculino" },
+                { name: "Iapetus", gender: "Masculino" }
+            ]
+        };
+
+        const dom = {};
+        Object.assign(dom, {
+            generateBtn: document.getElementById('generateBtn'), textInput: document.getElementById('textInput'), voiceSelect: document.getElementById('voiceSelect'), 
+            languageSelect: document.getElementById('languageSelect'), mainAudioContainer: document.getElementById('mainAudioContainer'), 
+            historyList: document.getElementById('historyList'), status: document.getElementById('status'), genderFilters: document.getElementById('genderFilters'),
+            channelSelect: document.getElementById('channelSelect'), newChannelBtn: document.getElementById('newChannelBtn'), setFavoriteBtn: document.getElementById('setFavoriteBtn'),
+            previewPlayBtn: document.getElementById('previewPlayBtn'), previewStopBtn: document.getElementById('previewStopBtn'),
+            rateSlider: document.getElementById('rateSlider'), rateValue: document.getElementById('rateValue'),
+            charCounter: document.getElementById('charCounter'),
+        });
+        
+        const CHAR_LIMIT = 5000;
+        let activeGenderFilter = "Any";
+        let channels = {};
+        let previewAudio = null;
+
+        const getChannelsFromStorage = () => JSON.parse(localStorage.getItem('voiceChannels')) || {};
+        const saveChannelsToStorage = () => localStorage.setItem('voiceChannels', JSON.stringify(channels));
+
+        function updateCharCounter() {
+            const len = dom.textInput.value.length;
+            dom.charCounter.textContent = `${len} / ${CHAR_LIMIT}`;
+            const isOverLimit = len > CHAR_LIMIT;
+            dom.charCounter.classList.toggle('error', isOverLimit);
+            dom.generateBtn.disabled = isOverLimit;
+        }
+
+        function populateLanguages() {
+            const sortedLanguages = Object.entries(API_DATA.LANGUAGES).sort((a, b) => a[1].localeCompare(b[1]));
+            sortedLanguages.forEach(([code, name]) => {
+                const option = document.createElement('option');
+                option.value = code; option.textContent = name;
+                if (code === 'pt-BR') option.selected = true;
+                dom.languageSelect.appendChild(option);
+            });
+        }
+
+        function filterAndPopulateVoices() {
+            dom.voiceSelect.innerHTML = '';
+            const channelName = dom.channelSelect.value;
+            let voicesToShow = [];
+            if (channelName && channels[channelName]?.voiceName) {
+                const favVoice = API_DATA.VOICES.find(v => v.name === channels[channelName].voiceName);
+                if (favVoice) voicesToShow.push(favVoice);
+            } else {
+                voicesToShow = API_DATA.VOICES.filter(v => activeGenderFilter === 'Any' || v.gender === activeGenderFilter);
+            }
+            const hasVoices = voicesToShow.length > 0;
+            [dom.voiceSelect, dom.generateBtn, dom.previewPlayBtn, dom.setFavoriteBtn].forEach(el => el.disabled = !hasVoices);
+            if (hasVoices) {
+                voicesToShow.forEach(v => dom.voiceSelect.add(new Option(`${v.name} (${v.gender.substring(0, 1)})`, v.name)));
+            } else {
+                dom.voiceSelect.add(new Option('Nenhuma voz para exibir', '', true, true));
+                dom.voiceSelect.disabled = true;
+            }
+        }
+        
+        function populateChannelsDropdown() {
+            const currentVal = dom.channelSelect.value;
+            dom.channelSelect.innerHTML = '<option value="">Nenhum canal selecionado</option>';
+            Object.keys(channels).forEach(name => dom.channelSelect.add(new Option(name, name)));
+            dom.channelSelect.value = currentVal;
+        }
+        
+        async function updateHistoryList() {
+            try {
+                const response = await fetch('/history-list');
+                const files = await response.json();
+                dom.historyList.innerHTML = files.length > 0
+                    ? files.map(file => `<li class="history-item"><span>${file}</span><audio controls src="/history/${file}"></audio><button class="delete-btn" data-filename="${file}" title="Excluir áudio">🗑️</button></li>`).join('')
+                    : '<li>Nenhum áudio no histórico.</li>';
+            } catch (error) { console.error("Erro ao carregar histórico:", error); }
+        }
+        
+        function stopPreview() { if (previewAudio) { previewAudio.pause(); previewAudio = null; } }
+        
+        dom.genderFilters.addEventListener('click', (e) => {
+            const btn = e.target.closest('.filter-btn');
+            if (!btn) return;
+            activeGenderFilter = btn.dataset.filter;
+            dom.genderFilters.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterAndPopulateVoices();
+        });
+        
+        dom.channelSelect.addEventListener('change', (e) => {
+            const channelName = e.target.value;
+            filterAndPopulateVoices();
+            if (channelName && channels[channelName]) {
+                const { languageCode, voiceName, speakingRate } = channels[channelName];
+                dom.languageSelect.value = languageCode || 'pt-BR';
+                dom.rateSlider.value = speakingRate || 1.0;
+                dom.rateValue.textContent = parseFloat(dom.rateSlider.value).toFixed(2) + 'x';
+                if (voiceName) dom.voiceSelect.value = voiceName;
+            }
+        });
+
+        dom.newChannelBtn.addEventListener('click', () => {
+            const name = prompt("Digite o nome para o novo canal:");
+            if (name && !channels[name]) {
+                channels[name] = {};
+                saveChannelsToStorage();
+                populateChannelsDropdown();
+                dom.channelSelect.value = name;
+                alert(`Canal "${name}" criado! Configure e clique em '⭐' para salvar.`);
+            } else if (channels[name]) {
+                alert("Erro: Já existe um canal com esse nome.");
+            }
+        });
+
+        dom.setFavoriteBtn.addEventListener('click', () => {
+            const name = dom.channelSelect.value;
+            if (!name) { alert("Selecione um canal primeiro."); return; }
+            channels[name] = {
+                languageCode: dom.languageSelect.value,
+                voiceName: dom.voiceSelect.value,
+                speakingRate: parseFloat(dom.rateSlider.value)
+            };
+            saveChannelsToStorage();
+            alert(`Configuração salva para o canal "${name}"!`);
+        });
+
+        dom.rateSlider.addEventListener('input', () => { dom.rateValue.textContent = parseFloat(dom.rateSlider.value).toFixed(2) + 'x'; });
+        dom.textInput.addEventListener('input', updateCharCounter);
+        dom.previewPlayBtn.addEventListener('click', async () => { /* ... (código inalterado) ... */ });
+        dom.previewStopBtn.addEventListener('click', stopPreview);
+        dom.historyList.addEventListener('click', async (e) => { /* ... (código inalterado) ... */ });
+        dom.generateBtn.addEventListener('click', async () => { /* ... (código inalterado) ... */ });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            channels = getChannelsFromStorage();
+            populateLanguages();
+            populateChannelsDropdown();
+            filterAndPopulateVoices();
+            updateHistoryList();
+            updateCharCounter();
+        });
+        
+        // Colando o restante da lógica de eventos para garantir
+        dom.previewPlayBtn.addEventListener('click', async () => {
+            stopPreview();
+            const btn = dom.previewPlayBtn;
+            btn.disabled = true; btn.textContent = '...'; dom.status.textContent = '';
+            try {
+                const response = await fetch('/preview-voice', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ language: dom.languageSelect.value, voice: dom.voiceSelect.value })
+                });
+                if (!response.ok) throw new Error((await response.json()).error);
+                const data = await response.json();
+                previewAudio = new Audio(`data:audio/mpeg;base64,${data.audio_content}`);
+                previewAudio.play();
+                previewAudio.onended = () => { previewAudio = null; btn.disabled = false; btn.textContent = '▶'; };
+            } catch (error) { dom.status.textContent = 'Erro: ' + error.message; btn.disabled = false; btn.textContent = '▶'; }
+        });
+        dom.historyList.addEventListener('click', async (e) => {
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (!deleteBtn) return;
+            const filename = deleteBtn.dataset.filename;
+            if (!confirm(`Tem certeza que deseja excluir o áudio "${filename}"?`)) return;
+            try {
+                deleteBtn.textContent = '...'; deleteBtn.disabled = true;
+                const response = await fetch(`/history/delete/${filename}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error((await response.json()).error || 'Falha ao excluir.');
+                deleteBtn.closest('.history-item').remove();
+            } catch (error) {
+                dom.status.textContent = `Erro ao excluir: ${error.message}`;
+                deleteBtn.textContent = '🗑️'; deleteBtn.disabled = false;
+            }
+        });
+        dom.generateBtn.addEventListener('click', async () => {
+            if (!dom.textInput.value.trim()) { dom.status.textContent = "Digite um texto."; return; }
+            if (dom.textInput.value.length > CHAR_LIMIT) { dom.status.textContent = `O texto excede o limite de ${CHAR_LIMIT} caracteres.`; return; }
+            dom.status.textContent = 'Gerando...'; dom.generateBtn.disabled = true;
+            try {
+                const response = await fetch('/synthesize', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: dom.textInput.value, language: dom.languageSelect.value,
+                        voice: dom.voiceSelect.value, speaking_rate: parseFloat(dom.rateSlider.value)
+                    })
+                });
+                if (!response.ok) throw new Error((await response.json()).error);
+                const data = await response.json();
+                dom.mainAudioContainer.innerHTML = `<audio controls autoplay src="${data.audio_url}"></audio>`;
+                dom.status.textContent = '';
+                await updateHistoryList();
+            } catch (error) { dom.status.textContent = 'Erro: ' + error.message; }
+            finally { dom.generateBtn.disabled = dom.textInput.value.length > CHAR_LIMIT; }
+        });
+    </script>
+</body>
+</html>
